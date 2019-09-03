@@ -1,0 +1,1 @@
+mixin JsonIllegalStateException implements Exception {}
