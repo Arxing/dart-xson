@@ -1,6 +1,6 @@
 name: xson
 description: A starting point for Dart libraries or applications.
-version: 0.0.1
+version: 0.0.5+1
 homepage: https://github.com/Arxing/dart-xson
 author: Arxing <meiswind711108@gmail.com>
 
@@ -11,7 +11,7 @@ dependencies:
   json_annotation: ^3.0.0
   dartpoet: ^1.0.0
   xfile: ^1.0.2
-  named_mode: ^1.0.0
+  named_mode: ^1.0.1
 
 dev_dependencies:
   pedantic: ^1.7.0

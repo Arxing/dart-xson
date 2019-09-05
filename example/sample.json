@@ -1,17 +1,16 @@
-{
-    "apple": {
-        "banana": {
-            "food": [
-                {
-                    "jo": [
-                        [
-                            [
-                                "minecraft"
-                            ]
-                        ]
-                    ]
-                }
-            ]
-        }
+[
+    "aaa",
+    {
+        "key1": "vale"
+    },
+    {
+        "key2": 100,
+        "key3": [
+            100,
+            {
+                "loop": true,
+                "lock": false
+            }
+        ]
     }
-}
+]

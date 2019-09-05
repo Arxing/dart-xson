@@ -7,6 +7,69 @@ import 'package:dartpoet/dartpoet.dart';
 import 'package:named_mode/named_mode.dart';
 import 'package:xfile/xfile.dart';
 
+List<String> _DART_KEYWORDS = [
+  'abstract',
+  'dynamic',
+  'implements',
+  'show',
+  'as',
+  'else',
+  'import',
+  'static',
+  'assert',
+  'enum',
+  'in',
+  'super',
+  'async',
+  'export',
+  'interface',
+  'switch',
+  'await',
+  'extends',
+  'is',
+  'sync',
+  'break',
+  'external',
+  'library',
+  'this',
+  'case',
+  'factory',
+  'mixin',
+  'throw',
+  'catch',
+  'false',
+  'new',
+  'true',
+  'class',
+  'final',
+  'null',
+  'try',
+  'const',
+  'finally',
+  'on',
+  'typedef',
+  'continue',
+  'for',
+  'operator',
+  'var',
+  'covariant',
+  'Function',
+  'part',
+  'void',
+  'default',
+  'get',
+  'rethrow',
+  'while',
+  'deferred',
+  'hide',
+  'return',
+  'with',
+  'do',
+  'if',
+  'set',
+  'yield'
+];
+
 class _Xson {
   String _makeJsonBean(String fileName, String rootClassName, String jsonSource) {
     dynamic json;
@@ -36,38 +99,44 @@ class _Xson {
     return renameToOtherMode(key1, NamedMode.AnApple) + renameToOtherMode(key2, NamedMode.AnApple);
   }
 
+  Map<String, dynamic> _remakePropertyKey(String oldKey) {
+    String newKey;
+    if (_DART_KEYWORDS.contains(oldKey) || oldKey.startsWith(RegExp('[0-9]'))) {
+      newKey = '\$$oldKey';
+    } else {
+      newKey = oldKey;
+    }
+    newKey = renameTo__anApple(newKey);
+    MetaSpec metaSpec;
+    if (newKey != oldKey) metaSpec = MetaSpec.of('JsonKey(name: \'$oldKey\')');
+    return {'key': newKey, 'meta': metaSpec};
+  }
+
   dynamic _iterateJsonEntity(dynamic entity, String ownKey, FileSpec fileSpec, String rootClassName) {
     rootClassName = renameToOtherMode(rootClassName, NamedMode.AnApple);
     bool isRoot = (ownKey == null);
+
+    String headName = renameTo__AnApple(ownKey ?? rootClassName);
     // concat class name with bean at tail
-    String className = '${ownKey ?? rootClassName}Bean';
+    String className = '${headName}Bean';
     // rename class name
     className = renameToOtherMode(className, NamedMode.AnApple);
-    print('ownKey=$ownKey, rootClassName=$rootClassName, className=$className');
+//    print('ownKey=$ownKey, rootClassName=$rootClassName, className=$className');
 
     if (entity is Map) {
       // return a class spec while visit at map
       Map<String, dynamic> map = entity;
 
       // build class spec
-      ClassSpec classSpec = _buildClassSpec(className, isRootObject: true, keys: map.keys).single;
+      ClassSpec classSpec = _buildClassSpec(className, rootIsObject: true, keys: map.keys);
       // foreach elements in map entity
       for (var entry in map.entries) {
         String key = entry.key;
         dynamic val = entry.value;
-        bool isNumberKey = key.startsWith(RegExp('[0-9]'));
-        PropertySpec propertySpec;
-
-        // build property spec in this class spec
-        if (isNumberKey) {
-          // handle number keys
-          String $key = '\$$key';
-          propertySpec = _buildPropertySpecOfMap($key, val, ownKey, fileSpec, rootClassName);
-          propertySpec.metas.add(MetaSpec.of('JsonKey(name: \'$key\')'));
-        } else {
-          propertySpec = _buildPropertySpecOfMap(key, val, ownKey, fileSpec, rootClassName);
-        }
-
+        Map<String, dynamic> product = _remakePropertyKey(key);
+        PropertySpec propertySpec = _buildPropertySpecOfMap(product['key'], val, ownKey, fileSpec, rootClassName);
+        MetaSpec metaSpec = product['meta'];
+        if (metaSpec != null) propertySpec.metas.add(metaSpec);
         // link property spec and class spec
         classSpec.properties.add(propertySpec);
       }
@@ -77,19 +146,16 @@ class _Xson {
     }
 
     if (entity is List) {
-      // return a type token (first component type) while visit at list
-      List<dynamic> list = entity;
-      TypeToken type = _generateListTypeToken(ownKey, list, fileSpec, rootClassName);
-      return type;
-
-//      dynamic firstComponent = list.isEmpty ? null : list[0];
-//      if (isRoot) {
-//        List<ClassSpec> classSpecs = _buildClassSpec(className, isRootObject: false, firstComponent: firstComponent).toList();
-//        fileSpec.classes.addAll(classSpecs);
-//      } else {}
-//
-//      TypeToken componentType = _buildComponentTypeOfList(firstComponent, ownKey, fileSpec, rootClassName);
-//      return componentType;
+      // if root is a list, then wrap to object
+      if (isRoot) {
+        Map<String, dynamic> wrapped = {'data': entity};
+        return _iterateJsonEntity(wrapped, ownKey, fileSpec, rootClassName);
+      } else {
+        // return a type token (first component type) while visit at list
+        List<dynamic> list = entity;
+        TypeToken type = _generateListTypeToken(ownKey, list, fileSpec, rootClassName);
+        return type;
+      }
     }
   }
 
@@ -99,24 +165,31 @@ class _Xson {
     Map<String, JsonInfo> cache = {};
     for (var element in list) {
       if (element == null) elementTypes.add(TypeToken.ofDynamic());
-      if (isPrimitive(element?.runtimeType))
+      if (isPrimitive(element?.runtimeType)) {
         elementTypes.add(TypeToken.parse(element));
-      else {
+      } else {
         JsonInfo jsonInfo = JsonInfo.parse(element);
         String md5 = jsonInfo.md5;
         if (cache.containsKey(md5)) continue;
         cache[jsonInfo.md5] = jsonInfo;
         int index = list.indexOf(element);
         String newKey = '${ownKey ?? ''}\$${index}List';
-        TypeToken typeToken = TypeToken.ofName(jsonInfo.type);
-        _iterateJsonEntity(element, newKey, fileSpec, fileName);
+//        TypeToken typeToken = TypeToken.ofName(jsonInfo.type+'99');
+        TypeToken typeToken;
+        dynamic result = _iterateJsonEntity(element, newKey, fileSpec, fileName);
+        if (result is ClassSpec) {
+          typeToken = TypeToken.ofName(result.className);
+        } else {
+          typeToken = result;
+        }
         elementTypes.add(typeToken);
       }
     }
-    if (elementTypes.toSet().toList().length == 1)
+    if (elementTypes.toSet().toList().length == 1) {
       return elementTypes[0];
-    else
+    } else {
       return TypeToken.ofDynamic();
+    }
   }
 
   FileSpec _buildFileSpec(String fileName) {
@@ -129,16 +202,12 @@ class _Xson {
     return fileSpec;
   }
 
-  Iterable<ClassSpec> _buildClassSpec(String className,
-      {bool isRootObject = true, Iterable<String> keys = const [], dynamic firstComponent}) sync* {
+  ClassSpec _buildClassSpec(String className, {bool rootIsObject = true, Iterable<String> keys = const [], TypeToken componentType}) {
     // translate number key
     List<String> mapKeys = keys.toList();
-    mapKeys.forEach((key) {
-      if (key.startsWith(RegExp('[0-9]'))) mapKeys[mapKeys.indexOf(key)] = '\$$key';
-    });
-
+    mapKeys.forEach((key) => mapKeys[mapKeys.indexOf(key)] = _remakePropertyKey(key)['key']);
     ClassSpec classSpec = ClassSpec.build(className);
-    if (isRootObject) {
+    if (rootIsObject) {
       classSpec.metas.add(MetaSpec.of('JsonSerializable()'));
       classSpec.constructors.add(ConstructorSpec.normal(
         classSpec,
@@ -147,55 +216,70 @@ class _Xson {
       classSpec.constructors.add(ConstructorSpec.namedFactory(
         classSpec,
         'fromJson',
-        parameters: [
-          ParameterSpec.normal('json', type: TypeToken.ofMap<String, dynamic>()),
-        ],
-        codeBlock: CodeBlockSpec.line('_\$${renameToOtherMode(className, NamedMode.AnApple)}FromJson(json);'),
-      ));
-      classSpec.methods.add(MethodSpec.build(
-        'toJson',
-        returnType: TypeToken.ofMap<String, dynamic>(),
-        codeBlock: CodeBlockSpec.line('_\$${renameToOtherMode(className, NamedMode.AnApple)}ToJson(this);'),
-      ));
-    } else {
-      classSpec.properties.add(PropertySpec.of(
-        'data',
-        type: TypeToken.ofListByToken(TypeToken.parse(firstComponent)),
+        parameters: [ParameterSpec.normal('json', type: TypeToken.ofMap<String, dynamic>())],
+        codeBlock: CodeBlockSpec.empty()..addLine('_\$${renameToOtherMode(className, NamedMode.AnApple)}FromJson(json);'),
       ));
       classSpec.constructors.add(ConstructorSpec.namedFactory(
         classSpec,
-        'fromJson',
+        'fromJsonString',
         parameters: [
-          ParameterSpec.normal('json', type: TypeToken.ofMap<String, dynamic>()),
+          ParameterSpec.normal('jsonSource', type: TypeToken.ofString()),
         ],
-        codeBlock: CodeBlockSpec.line('int a = 0;'),
+        codeBlock: CodeBlockSpec.empty()
+          ..addLine('dynamic json = jsonDecode(jsonSource);')
+          ..addLine('bool rootIsList = json is List;')
+          ..addLine('if (rootIsList) json = {\'data\': json};')
+          ..addLine('var instance = $className.fromJson(json);')
+          ..addLine('instance._rootIsList = rootIsList;')
+          ..addLine('return instance;'),
+      ));
+      classSpec.methods.add(MethodSpec.build(
+        'toJsonString',
+        returnType: TypeToken.ofString(),
+        codeBlock: CodeBlockSpec.empty()
+          ..addLine('Map<String, dynamic> json = _\$${renameToOtherMode(className, NamedMode.AnApple)}ToJson(this);')
+          ..addLine('dynamic out = _rootIsList ? json[\'data\'] : json;')
+          ..addLine('return jsonEncode(out);'),
+      ));
+      classSpec.properties.add(PropertySpec.ofBool('_rootIsList', defaultValue: false));
+    } else {
+      print('hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh');
+      classSpec.properties.add(PropertySpec.of(
+        'data',
+        type: TypeToken.ofListByToken(componentType),
+      ));
+      classSpec.methods.add(MethodSpec.build(
+        'fromJson',
+        isStatic: true,
+        parameters: [
+          ParameterSpec.normal('json', type: TypeToken.ofString()),
+        ],
+        codeBlock: CodeBlockSpec.empty()
+          ..addLine('$className instance = $className();')
+          ..addLine('instance.data = jsonDecode(json);')
+          ..addLine('return instance;'),
       ));
       classSpec.methods.add(MethodSpec.build(
         'toJson',
-        returnType: TypeToken.ofMap<String, dynamic>(),
-        codeBlock: CodeBlockSpec.line(''),
+        returnType: TypeToken.ofString(),
+        codeBlock: CodeBlockSpec.empty()..addLine('int a=0;'),
       ));
-      if (firstComponent != null && !isPrimitive(firstComponent?.runtimeType)) {
-        Map<String, dynamic> map = firstComponent;
-        ClassSpec dataClassSpec = _buildClassSpec('DataBean', isRootObject: true, keys: map.keys).single;
-        yield dataClassSpec;
-      }
     }
-    yield classSpec;
+    return classSpec;
   }
 
   PropertySpec _buildPropertySpecOfMap(String key, dynamic val, String ownKey, FileSpec fileSpec, String rootClassName) {
     PropertySpec propertySpec;
     if (val == null) propertySpec = PropertySpec.ofDynamic(key);
-    if (val is int)
+    if (val is int) {
       propertySpec = PropertySpec.ofInt(key);
-    else if (val is double)
+    } else if (val is double) {
       propertySpec = PropertySpec.ofDouble(key);
-    else if (val is bool)
+    } else if (val is bool) {
       propertySpec = PropertySpec.ofBool(key);
-    else if (val is String)
+    } else if (val is String) {
       propertySpec = PropertySpec.ofString(key);
-    else if (val is Map) {
+    } else if (val is Map) {
       // return a class spec while visit a map in other map
       // get key name like this template: <parent_key><this_key>
       String newKey = _combineToNewKey(ownKey, key);
@@ -213,51 +297,17 @@ class _Xson {
     }
     return propertySpec;
   }
+}
 
-  TypeToken _buildComponentTypeOfList(dynamic firstComponent, String ownKey, FileSpec fileSpec, String rootClassName) {
-    TypeToken componentType;
-    if (firstComponent == null) componentType = TypeToken.ofDynamic();
-    if (firstComponent is int)
-      componentType = TypeToken.ofInt();
-    else if (firstComponent is double)
-      componentType = TypeToken.ofDouble();
-    else if (firstComponent is bool)
-      componentType = TypeToken.ofBool();
-    else if (firstComponent is String)
-      componentType = TypeToken.ofString();
-    else if (firstComponent is Map) {
-      ClassSpec componentClassSpec = _iterateJsonEntity(firstComponent, ownKey, fileSpec, rootClassName);
-      componentType = TypeToken.ofName(componentClassSpec.className);
-    } else if (firstComponent is List) {
-      TypeToken innerComponentType = _iterateJsonEntity(fileSpec, ownKey, fileSpec, rootClassName);
-      componentType = TypeToken.ofListByToken(innerComponentType);
-    }
-    return componentType;
+void generateJsonBeanFile(String source, File outputFile, {String rootClassName, bool runBuildRunner = false}) async {
+  if (rootClassName == null) rootClassName = XFile.fromFile(outputFile).fileName(withExtension: false);
+  String content = _Xson()._makeJsonBean(XFile.fromFile(outputFile).fileName(withExtension: false), rootClassName, source);
+  outputFile.writeAsStringSync(content);
+  if (runBuildRunner) {
+    ProcessResult result = await executeBuildRunner();
+    print(result.stdout);
   }
 }
-
-void generateJsonBeanFile(String source, File outputFile) {
-  String content = _Xson()._makeJsonBean(XFile.fromFile(outputFile).fileName(withExtension: false), 'Root', source);
-  outputFile.writeAsStringSync(content);
-  executeBuildRunner().then((result)=>print(result.stdout));
-}
-
-//void generateJsonBeanInDirectory(String inputDirectory, String outputDirectory, {String Function(String) sourceReFormatter}) {
-//  XFile assetsJsonDir = XFile.fromPath(inputDirectory);
-//  XFile outputDir = XFile.fromPath(outputDirectory);
-//  assetsJsonDir.directory.listSync().where((file) => XFile.fromPath(file.path).extension() == 'json').forEach((file) {
-//    XFile xFile = XFile.fromPath(file.path);
-//    String fileName = xFile.fileName(withExtension: false);
-//    String jsonSource = xFile.file.readAsStringSync();
-//    if (sourceReFormatter != null) jsonSource = sourceReFormatter(jsonSource);
-//    print(jsonSource);
-//    String generatedFileName = renameToOtherMode(fileName, NamedMode.an_apple) + '_bean.dart';
-//    File outputFile = outputDir.append(generatedFileName).file;
-//    Xson().makeJsonBeanToFile(fileName, jsonSource, outputFile);
-//    print('generated file at ${outputFile.path}');
-//  });
-//  executeBuildRunner().then((result) => print(result.stdout), onError: (e) => print('occured error: $e'));
-//}
 
 Future<ProcessResult> executeBuildRunner() async {
   if (Platform.isWindows) {
@@ -267,10 +317,10 @@ Future<ProcessResult> executeBuildRunner() async {
       stdoutEncoding: utf8,
       stderrEncoding: utf8,
     );
-  } else if (Platform.isIOS) {
+  } else if (Platform.isMacOS) {
     return await Process.run(
       '/bin/sh',
-      ['-c', 'flutter', 'packages', 'pub', 'run', 'build_runner', 'build'],
+      ['flutter', 'packages', 'pub', 'run', 'build_runner', 'build'],
       stdoutEncoding: utf8,
       stderrEncoding: utf8,
     );
