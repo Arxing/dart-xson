@@ -17,41 +17,117 @@ Map<String, dynamic> _$OutputBeanToJson(OutputBean instance) =>
       'data': instance.data,
     };
 
-Data$2ListBean _$Data$2ListBeanFromJson(Map<String, dynamic> json) {
-  return Data$2ListBean(
-    key2: json['key2'] as int,
-    key3: json['key3'] as List,
+OutputData$4ListBean _$OutputData$4ListBeanFromJson(Map<String, dynamic> json) {
+  return OutputData$4ListBean();
+}
+
+Map<String, dynamic> _$OutputData$4ListBeanToJson(
+        OutputData$4ListBean instance) =>
+    <String, dynamic>{};
+
+OutputData$1ListBean _$OutputData$1ListBeanFromJson(Map<String, dynamic> json) {
+  return OutputData$1ListBean(
+    $100: json['100'] as int,
   );
 }
 
-Map<String, dynamic> _$Data$2ListBeanToJson(Data$2ListBean instance) =>
+Map<String, dynamic> _$OutputData$1ListBeanToJson(
+        OutputData$1ListBean instance) =>
     <String, dynamic>{
-      'key2': instance.key2,
-      'key3': instance.key3,
+      '100': instance.$100,
     };
 
-Data$2ListKey3$1ListBean _$Data$2ListKey3$1ListBeanFromJson(
+OutputData$0ListBean _$OutputData$0ListBeanFromJson(Map<String, dynamic> json) {
+  return OutputData$0ListBean(
+    a1: json['a1'] == null ? null : OutputData$0ListA1Bean.fromJson(json['a1']),
+    a2: json['a2'] == null ? null : OutputData$0ListA2Bean.fromJson(json['a2']),
+  );
+}
+
+Map<String, dynamic> _$OutputData$0ListBeanToJson(
+        OutputData$0ListBean instance) =>
+    <String, dynamic>{
+      'a1': instance.a1,
+      'a2': instance.a2,
+    };
+
+OutputData$0ListA2Bean _$OutputData$0ListA2BeanFromJson(
     Map<String, dynamic> json) {
-  return Data$2ListKey3$1ListBean(
-    loop: json['loop'] as bool,
-    lock: json['lock'] as bool,
+  return OutputData$0ListA2Bean(
+    aa2: json['aa2'] == null
+        ? null
+        : OutputData$0ListA2Aa2Bean.fromJson(json['aa2']),
   );
 }
 
-Map<String, dynamic> _$Data$2ListKey3$1ListBeanToJson(
-        Data$2ListKey3$1ListBean instance) =>
+Map<String, dynamic> _$OutputData$0ListA2BeanToJson(
+        OutputData$0ListA2Bean instance) =>
     <String, dynamic>{
-      'loop': instance.loop,
-      'lock': instance.lock,
+      'aa2': instance.aa2,
     };
 
-Data$1ListBean _$Data$1ListBeanFromJson(Map<String, dynamic> json) {
-  return Data$1ListBean(
-    key1: json['key1'] as String,
+OutputData$0ListA2Aa2Bean _$OutputData$0ListA2Aa2BeanFromJson(
+    Map<String, dynamic> json) {
+  return OutputData$0ListA2Aa2Bean(
+    aaa2: (json['aaa2'] as List)
+        ?.map((e) =>
+            e == null ? null : OutputData$0ListA2Aa2Aaa2$0ListBean.fromJson(e))
+        ?.toList(),
   );
 }
 
-Map<String, dynamic> _$Data$1ListBeanToJson(Data$1ListBean instance) =>
+Map<String, dynamic> _$OutputData$0ListA2Aa2BeanToJson(
+        OutputData$0ListA2Aa2Bean instance) =>
     <String, dynamic>{
-      'key1': instance.key1,
+      'aaa2': instance.aaa2,
     };
+
+OutputData$0ListA2Aa2Aaa2$0ListBean
+    _$OutputData$0ListA2Aa2Aaa2$0ListBeanFromJson(Map<String, dynamic> json) {
+  return OutputData$0ListA2Aa2Aaa2$0ListBean(
+    aaaa2: json['aaaa2'] == null
+        ? null
+        : OutputData$0ListA2Aa2Aaa2$0ListAaaa2Bean.fromJson(json['aaaa2']),
+  );
+}
+
+Map<String, dynamic> _$OutputData$0ListA2Aa2Aaa2$0ListBeanToJson(
+        OutputData$0ListA2Aa2Aaa2$0ListBean instance) =>
+    <String, dynamic>{
+      'aaaa2': instance.aaaa2,
+    };
+
+OutputData$0ListA2Aa2Aaa2$0ListAaaa2Bean
+    _$OutputData$0ListA2Aa2Aaa2$0ListAaaa2BeanFromJson(
+        Map<String, dynamic> json) {
+  return OutputData$0ListA2Aa2Aaa2$0ListAaaa2Bean();
+}
+
+Map<String, dynamic> _$OutputData$0ListA2Aa2Aaa2$0ListAaaa2BeanToJson(
+        OutputData$0ListA2Aa2Aaa2$0ListAaaa2Bean instance) =>
+    <String, dynamic>{};
+
+OutputData$0ListA1Bean _$OutputData$0ListA1BeanFromJson(
+    Map<String, dynamic> json) {
+  return OutputData$0ListA1Bean(
+    aa1: (json['aa1'] as List)
+        ?.map((e) =>
+            e == null ? null : OutputData$0ListA1Aa1$0ListBean.fromJson(e))
+        ?.toList(),
+  );
+}
+
+Map<String, dynamic> _$OutputData$0ListA1BeanToJson(
+        OutputData$0ListA1Bean instance) =>
+    <String, dynamic>{
+      'aa1': instance.aa1,
+    };
+
+OutputData$0ListA1Aa1$0ListBean _$OutputData$0ListA1Aa1$0ListBeanFromJson(
+    Map<String, dynamic> json) {
+  return OutputData$0ListA1Aa1$0ListBean();
+}
+
+Map<String, dynamic> _$OutputData$0ListA1Aa1$0ListBeanToJson(
+        OutputData$0ListA1Aa1$0ListBean instance) =>
+    <String, dynamic>{};

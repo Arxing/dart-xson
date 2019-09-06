@@ -1,0 +1,1 @@
+pub publish --server=https://pub.dartlang.org & pub global run dart_pub_notifier_bot:main -action update

@@ -2,10 +2,14 @@
 
 - Initial version, created by Stagehand
 
-## 0.0.2
+## 0.0.6+3
 
-- finished some futures
+- change named rule of nested class name, prefix top-level class name to every nested class
 
-## 0.0.5
+- update json serialize/deserialize interface of generated bean:
 
-- good
+    + factory Bean.fromJson(dynamic json);
+    
+    + dynamic toJson();
+
+> dynamic must be list(json array) or map(json object), if neither is then an error will be thrown

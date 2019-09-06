@@ -84,7 +84,7 @@ class _Xson {
     // create file spec
     FileSpec fileSpec = _buildFileSpec(fileName);
     // iterate json all nodes and build file spec
-    _iterateJsonEntity(json, null, fileSpec, rootClassName);
+    _iterateJsonEntity(json, null, fileSpec, rootClassName, 0);
 
     // build dart file from file spec
     DartFile dartFile = DartFile.fromFileSpec(fileSpec);
@@ -112,16 +112,13 @@ class _Xson {
     return {'key': newKey, 'meta': metaSpec};
   }
 
-  dynamic _iterateJsonEntity(dynamic entity, String ownKey, FileSpec fileSpec, String rootClassName) {
+  dynamic _iterateJsonEntity(dynamic entity, String ownKey, FileSpec fileSpec, String rootClassName, int depth) {
     rootClassName = renameToOtherMode(rootClassName, NamedMode.AnApple);
     bool isRoot = (ownKey == null);
 
-    String headName = renameTo__AnApple(ownKey ?? rootClassName);
-    // concat class name with bean at tail
-    String className = '${headName}Bean';
-    // rename class name
-    className = renameToOtherMode(className, NamedMode.AnApple);
-//    print('ownKey=$ownKey, rootClassName=$rootClassName, className=$className');
+    String className = renameTo__AnApple(rootClassName) + renameTo__AnApple(ownKey ?? '') + 'Bean';
+
+//    print('depth=$depth, class=$className, root=$rootClassName');
 
     if (entity is Map) {
       // return a class spec while visit at map
@@ -134,7 +131,7 @@ class _Xson {
         String key = entry.key;
         dynamic val = entry.value;
         Map<String, dynamic> product = _remakePropertyKey(key);
-        PropertySpec propertySpec = _buildPropertySpecOfMap(product['key'], val, ownKey, fileSpec, rootClassName);
+        PropertySpec propertySpec = _buildPropertySpecOfMap(product['key'], val, ownKey, fileSpec, rootClassName, depth);
         MetaSpec metaSpec = product['meta'];
         if (metaSpec != null) propertySpec.metas.add(metaSpec);
         // link property spec and class spec
@@ -149,17 +146,17 @@ class _Xson {
       // if root is a list, then wrap to object
       if (isRoot) {
         Map<String, dynamic> wrapped = {'data': entity};
-        return _iterateJsonEntity(wrapped, ownKey, fileSpec, rootClassName);
+        return _iterateJsonEntity(wrapped, ownKey, fileSpec, rootClassName, depth);
       } else {
-        // return a type token (first component type) while visit at list
         List<dynamic> list = entity;
-        TypeToken type = _generateListTypeToken(ownKey, list, fileSpec, rootClassName);
+        // resolve the best generic type of list and generate recursively all class
+        TypeToken type = _generateListTypeTokenRecursively(ownKey, list, fileSpec, rootClassName, depth);
         return type;
       }
     }
   }
 
-  TypeToken _generateListTypeToken(String ownKey, List<dynamic> list, FileSpec fileSpec, String fileName) {
+  TypeToken _generateListTypeTokenRecursively(String ownKey, List<dynamic> list, FileSpec fileSpec, String fileName, int depth) {
     if (list == null || list.isEmpty) return TypeToken.ofDynamic();
     List<TypeToken> elementTypes = [];
     Map<String, JsonInfo> cache = {};
@@ -174,9 +171,8 @@ class _Xson {
         cache[jsonInfo.md5] = jsonInfo;
         int index = list.indexOf(element);
         String newKey = '${ownKey ?? ''}\$${index}List';
-//        TypeToken typeToken = TypeToken.ofName(jsonInfo.type+'99');
         TypeToken typeToken;
-        dynamic result = _iterateJsonEntity(element, newKey, fileSpec, fileName);
+        dynamic result = _iterateJsonEntity(element, newKey, fileSpec, fileName, depth);
         if (result is ClassSpec) {
           typeToken = TypeToken.ofName(result.className);
         } else {
@@ -202,6 +198,8 @@ class _Xson {
     return fileSpec;
   }
 
+  String _realClassName(String originClassName) => '_\$${renameTo__AnApple(originClassName)}';
+
   ClassSpec _buildClassSpec(String className, {bool rootIsObject = true, Iterable<String> keys = const [], TypeToken componentType}) {
     // translate number key
     List<String> mapKeys = keys.toList();
@@ -216,59 +214,27 @@ class _Xson {
       classSpec.constructors.add(ConstructorSpec.namedFactory(
         classSpec,
         'fromJson',
-        parameters: [ParameterSpec.normal('json', type: TypeToken.ofMap<String, dynamic>())],
-        codeBlock: CodeBlockSpec.empty()..addLine('_\$${renameToOtherMode(className, NamedMode.AnApple)}FromJson(json);'),
-      ));
-      classSpec.constructors.add(ConstructorSpec.namedFactory(
-        classSpec,
-        'fromJsonString',
-        parameters: [
-          ParameterSpec.normal('jsonSource', type: TypeToken.ofString()),
-        ],
+        parameters: [ParameterSpec.normal('json', type: TypeToken.ofDynamic())],
         codeBlock: CodeBlockSpec.empty()
-          ..addLine('dynamic json = jsonDecode(jsonSource);')
-          ..addLine('bool rootIsList = json is List;')
-          ..addLine('if (rootIsList) json = {\'data\': json};')
-          ..addLine('var instance = $className.fromJson(json);')
-          ..addLine('instance._rootIsList = rootIsList;')
-          ..addLine('return instance;'),
-      ));
-      classSpec.methods.add(MethodSpec.build(
-        'toJsonString',
-        returnType: TypeToken.ofString(),
-        codeBlock: CodeBlockSpec.empty()
-          ..addLine('Map<String, dynamic> json = _\$${renameToOtherMode(className, NamedMode.AnApple)}ToJson(this);')
-          ..addLine('dynamic out = _rootIsList ? json[\'data\'] : json;')
-          ..addLine('return jsonEncode(out);'),
-      ));
-      classSpec.properties.add(PropertySpec.ofBool('_rootIsList', defaultValue: false));
-    } else {
-      print('hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh');
-      classSpec.properties.add(PropertySpec.of(
-        'data',
-        type: TypeToken.ofListByToken(componentType),
-      ));
-      classSpec.methods.add(MethodSpec.build(
-        'fromJson',
-        isStatic: true,
-        parameters: [
-          ParameterSpec.normal('json', type: TypeToken.ofString()),
-        ],
-        codeBlock: CodeBlockSpec.empty()
-          ..addLine('$className instance = $className();')
-          ..addLine('instance.data = jsonDecode(json);')
-          ..addLine('return instance;'),
+          ..addLine('if (json is Map) return ${_realClassName(className)}FromJson(json);')
+          ..addLine('if (json is List) return ${_realClassName(className)}FromJson({\'data\': json});')
+          ..addLine('throw \'fromJson parameter must be List or Map, but you give \${json?.runtimeType}\';'),
       ));
       classSpec.methods.add(MethodSpec.build(
         'toJson',
-        returnType: TypeToken.ofString(),
-        codeBlock: CodeBlockSpec.empty()..addLine('int a=0;'),
+        returnType: TypeToken.ofDynamic(),
+        codeBlock: CodeBlockSpec.empty()
+          ..addLine('Map<String, dynamic> json = _\$${renameToOtherMode(className, NamedMode.AnApple)}ToJson(this);')
+          ..addLine('return _rootIsList ? json[\'data\'] : json;'),
       ));
+      classSpec.properties.add(PropertySpec.ofBool('_rootIsList', defaultValue: false));
+      classSpec.getters
+          .add(GetterSpec.build('isJsonList', type: TypeToken.ofBool(), codeBlock: CodeBlockSpec.empty()..addLine('_rootIsList;')));
     }
     return classSpec;
   }
 
-  PropertySpec _buildPropertySpecOfMap(String key, dynamic val, String ownKey, FileSpec fileSpec, String rootClassName) {
+  PropertySpec _buildPropertySpecOfMap(String key, dynamic val, String ownKey, FileSpec fileSpec, String rootClassName, int depth) {
     PropertySpec propertySpec;
     if (val == null) propertySpec = PropertySpec.ofDynamic(key);
     if (val is int) {
@@ -284,14 +250,14 @@ class _Xson {
       // get key name like this template: <parent_key><this_key>
       String newKey = _combineToNewKey(ownKey, key);
       // get the element class spec
-      ClassSpec innerClassSpec = _iterateJsonEntity(val, newKey, fileSpec, rootClassName);
+      ClassSpec innerClassSpec = _iterateJsonEntity(val, newKey, fileSpec, rootClassName, depth + 1);
       // build this object property spec with element class spec
       propertySpec = PropertySpec.of(key, type: TypeToken.ofName(innerClassSpec.className));
     } else if (val is List) {
       // return component type token while visit a list in other map
       String newKey = _combineToNewKey(ownKey, key);
       // get the element type token
-      TypeToken componentType = _iterateJsonEntity(val, newKey, fileSpec, rootClassName);
+      TypeToken componentType = _iterateJsonEntity(val, newKey, fileSpec, rootClassName, depth + 1);
       // build this list property spec with element type token
       propertySpec = PropertySpec.ofListByToken(key, componentType: componentType);
     }

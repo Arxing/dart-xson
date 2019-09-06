@@ -1,22 +1,27 @@
 A library for Dart developers.
 
-Created from templates made available by Stagehand under a BSD-style
-[license](https://github.com/dart-lang/stagehand/blob/master/LICENSE).
-
 ## Usage
 
 A simple usage example:
 
 ```dart
-import 'package:xson/xson.dart';
+import 'dart:io';
 
-main() {
-  var awesome = new Awesome();
+import 'package:xson/xson.dart' as xson;
+import '../example/generated/output.dart';
+
+main() async {
+  File from = File('./example/sample2.json');
+  File output = File('./example/generated/output.dart');
+  await xson.generateJsonBeanFile(from.readAsStringSync(), output, runBuildRunner: true);
+
+  String jsonSource = from.readAsStringSync();
+  dynamic json = xson.jsonDecode(jsonSource);
+  OutputBean outputBean = OutputBean.fromJson(json);
+  String encode = xson.jsonEncode(outputBean.toJson());
+  print(encode);
 }
 ```
 
 ## Features and bugs
 
-Please file feature requests and bugs at the [issue tracker][tracker].
-
-[tracker]: http://example.com/issues/replaceme
