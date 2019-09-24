@@ -4,7 +4,7 @@ import 'package:xson/xson.dart' as xson;
 import '../example/generated/output.dart';
 
 main() async {
-  File from = File('./example/sample2.json');
+  File from = File('./example/sample.json');
   File output = File('./example/generated/output.dart');
   await xson.generateJsonBeanFile(from.readAsStringSync(), output, runBuildRunner: true);
 

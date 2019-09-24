@@ -106,6 +106,7 @@ class _Xson {
     } else {
       newKey = oldKey;
     }
+    newKey = newKey.replaceAll(RegExp('[^0-9a-zA-Z_\$]+'), '_');
     newKey = renameTo__anApple(newKey);
     MetaSpec metaSpec;
     if (newKey != oldKey) metaSpec = MetaSpec.of('JsonKey(name: \'$oldKey\')');
@@ -274,6 +275,8 @@ void generateJsonBeanFile(String source, File outputFile, {String rootClassName,
     print(result.stdout);
   }
 }
+
+//String Function(String) _sourceCommentDeleteParser = (source)=> source.split('\n').where((line)=>!line.trimLeft().startsWith('//'));
 
 Future<ProcessResult> executeBuildRunner() async {
   if (Platform.isWindows) {
