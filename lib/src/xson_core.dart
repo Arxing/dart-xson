@@ -71,7 +71,9 @@ List<String> _DART_KEYWORDS = [
 ];
 
 class _Xson {
-  String _makeJsonBean(String fileName, String rootClassName, String jsonSource) {
+  Map<String, String> _extras = {};
+
+  String _makeJsonBean(String fileName, String rootClassName, String jsonSource, {Map<String, String> extras}) {
     dynamic json;
     try {
       // decode string to json
@@ -80,11 +82,12 @@ class _Xson {
       print('json decode error: $e');
       return '';
     }
+    _extras.addAll(extras);
 
     // create file spec
     FileSpec fileSpec = _buildFileSpec(fileName);
     // iterate json all nodes and build file spec
-    _iterateJsonEntity(json, null, fileSpec, rootClassName, 0);
+    _iterateJsonEntity(json, null, fileSpec, rootClassName, 0, "");
 
     // build dart file from file spec
     DartFile dartFile = DartFile.fromFileSpec(fileSpec);
@@ -113,7 +116,7 @@ class _Xson {
     return {'key': newKey, 'meta': metaSpec};
   }
 
-  dynamic _iterateJsonEntity(dynamic entity, String ownKey, FileSpec fileSpec, String rootClassName, int depth) {
+  dynamic _iterateJsonEntity(dynamic entity, String ownKey, FileSpec fileSpec, String rootClassName, int depth, String selector) {
     rootClassName = renameToOtherMode(rootClassName, NamedMode.AnApple);
     bool isRoot = (ownKey == null);
 
@@ -132,7 +135,7 @@ class _Xson {
         String key = entry.key;
         dynamic val = entry.value;
         Map<String, dynamic> product = _remakePropertyKey(key);
-        PropertySpec propertySpec = _buildPropertySpecOfMap(product['key'], val, ownKey, fileSpec, rootClassName, depth);
+        PropertySpec propertySpec = _buildPropertySpecOfMap(product['key'], val, ownKey, fileSpec, rootClassName, depth, "$selector.$key");
         MetaSpec metaSpec = product['meta'];
         if (metaSpec != null) propertySpec.metas.add(metaSpec);
         // link property spec and class spec
@@ -147,17 +150,18 @@ class _Xson {
       // if root is a list, then wrap to object
       if (isRoot) {
         Map<String, dynamic> wrapped = {'data': entity};
-        return _iterateJsonEntity(wrapped, ownKey, fileSpec, rootClassName, depth);
+        return _iterateJsonEntity(wrapped, ownKey, fileSpec, rootClassName, depth, "$selector[]");
       } else {
         List<dynamic> list = entity;
         // resolve the best generic type of list and generate recursively all class
-        TypeToken type = _generateListTypeTokenRecursively(ownKey, list, fileSpec, rootClassName, depth);
+        TypeToken type = _generateListTypeTokenRecursively(ownKey, list, fileSpec, rootClassName, depth, selector);
         return type;
       }
     }
   }
 
-  TypeToken _generateListTypeTokenRecursively(String ownKey, List<dynamic> list, FileSpec fileSpec, String fileName, int depth) {
+  TypeToken _generateListTypeTokenRecursively(
+      String ownKey, List<dynamic> list, FileSpec fileSpec, String fileName, int depth, String selector) {
     if (list == null || list.isEmpty) return TypeToken.ofDynamic();
     List<TypeToken> elementTypes = [];
     Map<String, JsonInfo> cache = {};
@@ -173,7 +177,7 @@ class _Xson {
         int index = list.indexOf(element);
         String newKey = '${ownKey ?? ''}\$${index}List';
         TypeToken typeToken;
-        dynamic result = _iterateJsonEntity(element, newKey, fileSpec, fileName, depth);
+        dynamic result = _iterateJsonEntity(element, newKey, fileSpec, fileName, depth, "${selector}[]");
         if (result is ClassSpec) {
           typeToken = TypeToken.ofName(result.className);
         } else {
@@ -235,7 +239,8 @@ class _Xson {
     return classSpec;
   }
 
-  PropertySpec _buildPropertySpecOfMap(String key, dynamic val, String ownKey, FileSpec fileSpec, String rootClassName, int depth) {
+  PropertySpec _buildPropertySpecOfMap(
+      String key, dynamic val, String ownKey, FileSpec fileSpec, String rootClassName, int depth, String selector) {
     PropertySpec propertySpec;
     if (val == null) propertySpec = PropertySpec.ofDynamic(key);
     if (val is int) {
@@ -251,24 +256,35 @@ class _Xson {
       // get key name like this template: <parent_key><this_key>
       String newKey = _combineToNewKey(ownKey, key);
       // get the element class spec
-      ClassSpec innerClassSpec = _iterateJsonEntity(val, newKey, fileSpec, rootClassName, depth + 1);
+      ClassSpec innerClassSpec = _iterateJsonEntity(val, newKey, fileSpec, rootClassName, depth + 1, selector);
       // build this object property spec with element class spec
       propertySpec = PropertySpec.of(key, type: TypeToken.ofName(innerClassSpec.className));
     } else if (val is List) {
       // return component type token while visit a list in other map
       String newKey = _combineToNewKey(ownKey, key);
       // get the element type token
-      TypeToken componentType = _iterateJsonEntity(val, newKey, fileSpec, rootClassName, depth + 1);
+      TypeToken componentType = _iterateJsonEntity(val, newKey, fileSpec, rootClassName, depth + 1, selector);
       // build this list property spec with element type token
       propertySpec = PropertySpec.ofListByToken(key, componentType: componentType);
     }
+    if(_extras.containsKey(selector)){
+
+
+
+    }
+
+
+    propertySpec.doc = DocSpec.text(selector);
     return propertySpec;
   }
 }
 
 void generateJsonBeanFile(String source, File outputFile, {String rootClassName, bool runBuildRunner = false}) async {
   if (rootClassName == null) rootClassName = XFile.fromFile(outputFile).fileName(withExtension: false);
-  String content = _Xson()._makeJsonBean(XFile.fromFile(outputFile).fileName(withExtension: false), rootClassName, source);
+  var result = _sourceResolver(source);
+  Map<String, String> extras = result[0];
+  source = result[1];
+  String content = _Xson()._makeJsonBean(XFile.fromFile(outputFile).fileName(withExtension: false), rootClassName, source, extras: extras);
   outputFile.writeAsStringSync(content);
   if (runBuildRunner) {
     ProcessResult result = await executeBuildRunner();
@@ -276,7 +292,16 @@ void generateJsonBeanFile(String source, File outputFile, {String rootClassName,
   }
 }
 
-//String Function(String) _sourceCommentDeleteParser = (source)=> source.split('\n').where((line)=>!line.trimLeft().startsWith('//'));
+List Function(String) _sourceResolver = (source) {
+  var lines = source.split('\n');
+  var jsonSource = lines.where((line) => !line.trimLeft().startsWith(RegExp('//@?'))).join('\n');
+  var extras = {};
+  extras.addEntries(lines.where((line) => line.trimLeft().startsWith('//@')).map((line) => line.substring(0, 2)).map((line) {
+    var splits = line.split('=');
+    return MapEntry(splits[0], splits[1]);
+  }).toList());
+  return [extras, jsonSource];
+};
 
 Future<ProcessResult> executeBuildRunner() async {
   if (Platform.isWindows) {
