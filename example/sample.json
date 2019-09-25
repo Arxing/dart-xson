@@ -1,4 +1,13 @@
 {
-    "val": "0"
+    "list":[
+        {
+            "a": 100,
+            "b": true
+        },
+        {
+            "a": 200,
+            "b": false
+        }
+    ]
 }
-//@.val=int
+//@.list[].a=String

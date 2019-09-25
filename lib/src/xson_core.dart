@@ -102,7 +102,7 @@ class _Xson {
     return renameToOtherMode(key1, NamedMode.AnApple) + renameToOtherMode(key2, NamedMode.AnApple);
   }
 
-  Map<String, dynamic> _remakePropertyKey(String oldKey) {
+  String _remakePropertyKey(String oldKey) {
     String newKey;
     if (_DART_KEYWORDS.contains(oldKey) || oldKey.startsWith(RegExp('[0-9]'))) {
       newKey = '\$$oldKey';
@@ -111,9 +111,7 @@ class _Xson {
     }
     newKey = newKey.replaceAll(RegExp('[^0-9a-zA-Z_\$]+'), '_');
     newKey = renameTo__anApple(newKey);
-    MetaSpec metaSpec;
-    if (newKey != oldKey) metaSpec = MetaSpec.of('JsonKey(name: \'$oldKey\')');
-    return {'key': newKey, 'meta': metaSpec};
+    return newKey;
   }
 
   dynamic _iterateJsonEntity(dynamic entity, String ownKey, FileSpec fileSpec, String rootClassName, int depth, String selector) {
@@ -134,10 +132,11 @@ class _Xson {
       for (var entry in map.entries) {
         String key = entry.key;
         dynamic val = entry.value;
-        Map<String, dynamic> product = _remakePropertyKey(key);
-        PropertySpec propertySpec = _buildPropertySpecOfMap(product['key'], val, ownKey, fileSpec, rootClassName, depth, "$selector.$key");
-        MetaSpec metaSpec = product['meta'];
-        if (metaSpec != null) propertySpec.metas.add(metaSpec);
+        String newKey = _remakePropertyKey(key);
+
+        PropertySpec propertySpec = _buildPropertySpecOfMap(newKey, val, ownKey, fileSpec, rootClassName, depth, "$selector.$key");
+        MetaSpec metaSpec = _findJsonKeyOrCreate(propertySpec);
+        metaSpec.parameters.add(ParameterSpec.named("name", isValue: true, value: key));
         // link property spec and class spec
         classSpec.properties.add(propertySpec);
       }
@@ -199,6 +198,7 @@ class _Xson {
     // import json convert
     fileSpec.dependencies.add(DependencySpec.import('dart:convert'));
     fileSpec.dependencies.add(DependencySpec.import('package:json_annotation/json_annotation.dart'));
+    fileSpec.dependencies.add(DependencySpec.import("package:xson/src/json_value_transformer.dart"));
     fileSpec.dependencies.add(DependencySpec.part('${renameToOtherMode(fileName, NamedMode.an_apple)}.g.dart'));
     return fileSpec;
   }
@@ -208,10 +208,10 @@ class _Xson {
   ClassSpec _buildClassSpec(String className, {bool rootIsObject = true, Iterable<String> keys = const [], TypeToken componentType}) {
     // translate number key
     List<String> mapKeys = keys.toList();
-    mapKeys.forEach((key) => mapKeys[mapKeys.indexOf(key)] = _remakePropertyKey(key)['key']);
+    mapKeys.forEach((key) => mapKeys[mapKeys.indexOf(key)] = _remakePropertyKey(key));
     ClassSpec classSpec = ClassSpec.build(className);
     if (rootIsObject) {
-      classSpec.metas.add(MetaSpec.of('JsonSerializable()'));
+      classSpec.metas.add(MetaSpec.ofConstructor(TypeToken.ofName("JsonSerializable")));
       classSpec.constructors.add(ConstructorSpec.normal(
         classSpec,
         parameters: mapKeys.map((o) => ParameterSpec.named(o, isSelfParameter: true)).toList(),
@@ -242,14 +242,19 @@ class _Xson {
   PropertySpec _buildPropertySpecOfMap(
       String key, dynamic val, String ownKey, FileSpec fileSpec, String rootClassName, int depth, String selector) {
     PropertySpec propertySpec;
+    TypeToken typeToken;
     if (val == null) propertySpec = PropertySpec.ofDynamic(key);
     if (val is int) {
+      typeToken = TypeToken.ofInt();
       propertySpec = PropertySpec.ofInt(key);
     } else if (val is double) {
+      typeToken = TypeToken.ofDouble();
       propertySpec = PropertySpec.ofDouble(key);
     } else if (val is bool) {
+      typeToken = TypeToken.ofBool();
       propertySpec = PropertySpec.ofBool(key);
     } else if (val is String) {
+      typeToken = TypeToken.ofString();
       propertySpec = PropertySpec.ofString(key);
     } else if (val is Map) {
       // return a class spec while visit a map in other map
@@ -267,15 +272,32 @@ class _Xson {
       // build this list property spec with element type token
       propertySpec = PropertySpec.ofListByToken(key, componentType: componentType);
     }
-    if(_extras.containsKey(selector)){
-
-
-
+    typeToken = _extras.containsKey(selector) ? TypeToken.ofName(_extras[selector]) : typeToken;
+    if (typeToken != null) {
+      String propertyUniqueId = renameTo__AnApple(ownKey) + renameTo__AnApple(propertySpec.name);
+      String factoryName = "_parserFunc$propertyUniqueId";
+      fileSpec.methods.add(MethodSpec.build(
+        factoryName,
+        parameters: [ParameterSpec.normal("v")],
+        returnType: typeToken,
+        codeBlock: CodeBlockSpec.line('JsonValueTransformer.parse<${typeToken.typeName}>(v);'),
+      ));
+      _findJsonKeyOrCreate(propertySpec).parameters.add(ParameterSpec.named(
+            "fromJson",
+            isValue: true,
+            value: factoryName,
+            valueString: false,
+          ));
+      propertySpec.type = typeToken;
     }
-
-
-    propertySpec.doc = DocSpec.text(selector);
     return propertySpec;
+  }
+
+  MetaSpec _findJsonKeyOrCreate(PropertySpec spec) {
+    if (spec.metas.isEmpty || spec.metas.where((o) => o.typeToken == TypeToken.ofName("JsonKey")).isEmpty) {
+      spec.metas.add(MetaSpec.ofConstructor(TypeToken.ofName("JsonKey")));
+    }
+    return spec.metas.firstWhere((o) => o.typeToken == TypeToken.ofName("JsonKey"));
   }
 }
 
@@ -292,11 +314,13 @@ void generateJsonBeanFile(String source, File outputFile, {String rootClassName,
   }
 }
 
+String readJsonIgnoreComments(String json) => json.split('\n').where((o) => !o.trimLeft().startsWith('//')).join('\n');
+
 List Function(String) _sourceResolver = (source) {
   var lines = source.split('\n');
   var jsonSource = lines.where((line) => !line.trimLeft().startsWith(RegExp('//@?'))).join('\n');
-  var extras = {};
-  extras.addEntries(lines.where((line) => line.trimLeft().startsWith('//@')).map((line) => line.substring(0, 2)).map((line) {
+  var extras = <String, String>{};
+  extras.addEntries(lines.where((line) => line.trimLeft().startsWith('//@')).map((line) => line.substring(3)).map((line) {
     var splits = line.split('=');
     return MapEntry(splits[0], splits[1]);
   }).toList());

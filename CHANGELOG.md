@@ -29,3 +29,22 @@ ex:
 ## 0.0.6+5
 
 - fixed bugs
+
+## 0.0.7
+
+- type auto transformer of all property
+
+- now you can specific property type at json source just generate some tag anywhere like this:
+```json
+{
+    "a":100,
+    "b":[
+        {
+            "c": 200
+        }
+    ]
+}
+//@.a=String
+//@.b[].c=String
+```
+
