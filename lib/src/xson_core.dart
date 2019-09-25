@@ -1,11 +1,10 @@
-import 'dart:io';
 import 'dart:convert';
-import 'package:crypto/crypto.dart' as crypt;
-import 'package:convert/convert.dart';
-import 'package:xson/xson.dart';
+import 'dart:io';
+
 import 'package:dartpoet/dartpoet.dart';
 import 'package:named_mode/named_mode.dart';
 import 'package:xfile/xfile.dart';
+import 'package:xson/xson.dart';
 
 List<String> _DART_KEYWORDS = [
   'abstract',
@@ -136,7 +135,7 @@ class _Xson {
 
         PropertySpec propertySpec = _buildPropertySpecOfMap(newKey, val, ownKey, fileSpec, rootClassName, depth, "$selector.$key");
         MetaSpec metaSpec = _findJsonKeyOrCreate(propertySpec);
-        metaSpec.parameters.add(ParameterSpec.named("name", isValue: true, value: key));
+        if (key != newKey) metaSpec.parameters.add(ParameterSpec.named("name", isValue: true, value: key));
         // link property spec and class spec
         classSpec.properties.add(propertySpec);
       }
