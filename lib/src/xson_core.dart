@@ -197,7 +197,7 @@ class _Xson {
     // import json convert
     fileSpec.dependencies.add(DependencySpec.import('dart:convert'));
     fileSpec.dependencies.add(DependencySpec.import('package:json_annotation/json_annotation.dart'));
-    fileSpec.dependencies.add(DependencySpec.import("package:xson/src/json_value_transformer.dart"));
+    fileSpec.dependencies.add(DependencySpec.import("package:xson_utils/xson_utils.dart"));
     fileSpec.dependencies.add(DependencySpec.part('${renameToOtherMode(fileName, NamedMode.an_apple)}.g.dart'));
     return fileSpec;
   }

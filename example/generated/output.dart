@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:xson/src/json_value_transformer.dart';
+import '../../xson_utils/lib/src/json_value_transformer.dart';
 part 'output.g.dart';
 
 @JsonSerializable()
