@@ -43,8 +43,10 @@ class JsonValueTransformer {
             result = v;
             break;
           case bool:
+            throw "bool cannot parse to double";
           case int:
-            throw "bool or int cannot parse to double";
+            result = (v as int).toDouble();
+            break;
         }
         break;
     }

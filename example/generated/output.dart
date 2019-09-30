@@ -1,73 +1,15 @@
 import 'dart:convert';
 import 'package:json_annotation/json_annotation.dart';
-import '../../xson_utils/lib/src/json_value_transformer.dart';
+import 'package:xson_utils/xson_utils.dart';
 part 'output.g.dart';
 
 @JsonSerializable()
 class OutputBean {
   bool _rootIsList = false;
-  @JsonKey(fromJson: _parserFuncRes)
-  int res;
-  @JsonKey(fromJson: _parserFuncId)
-  String id;
-  @JsonKey(fromJson: _parserFuncUsername)
-  String username;
-  @JsonKey(fromJson: _parserFuncPass)
-  String pass;
-  @JsonKey(fromJson: _parserFuncAward)
-  String award;
-  @JsonKey(fromJson: _parserFuncAmoney)
-  String amoney;
-  @JsonKey(fromJson: _parserFuncBmoney)
-  String bmoney;
-  @JsonKey(fromJson: _parserFuncMoney)
-  String money;
-  @JsonKey(fromJson: _parserFuncGift)
-  String gift;
-  @JsonKey(fromJson: _parserFuncRebate)
-  String rebate;
-  @JsonKey(fromJson: _parserFuncBcmoney)
-  String bcmoney;
-  @JsonKey(fromJson: _parserFuncBlmoney)
-  String blmoney;
-  @JsonKey(fromJson: _parserFuncType)
-  String type;
-  @JsonKey(fromJson: _parserFuncIsb)
-  int isb;
-  @JsonKey(fromJson: _parserFuncIsz)
-  int isz;
-  @JsonKey(fromJson: _parserFuncLv)
-  int lv;
-  @JsonKey(fromJson: _parserFuncRkey)
-  int rkey;
-  @JsonKey(fromJson: _parserFuncRealname)
-  String realname;
-  @JsonKey(fromJson: _parserFuncIcon)
-  int icon;
-  @JsonKey(fromJson: _parserFuncPhone)
-  int phone;
+  @JsonKey()
+  OutputAaBean aa;
 
-  OutputBean(
-      {this.res,
-      this.id,
-      this.username,
-      this.pass,
-      this.award,
-      this.amoney,
-      this.bmoney,
-      this.money,
-      this.gift,
-      this.rebate,
-      this.bcmoney,
-      this.blmoney,
-      this.type,
-      this.isb,
-      this.isz,
-      this.lv,
-      this.rkey,
-      this.realname,
-      this.icon,
-      this.phone});
+  OutputBean({this.aa});
   factory OutputBean.fromJson(dynamic json) {
     if (json is Map) return _$OutputBeanFromJson(json);
     if (json is List) return _$OutputBeanFromJson({'data': json});
@@ -82,42 +24,83 @@ class OutputBean {
   }
 }
 
-int _parserFuncRes(dynamic v) => JsonValueTransformer.parse<int>(v);
+@JsonSerializable()
+class OutputAaBean {
+  bool _rootIsList = false;
+  @JsonKey()
+  List<dynamic> bb;
 
-String _parserFuncId(dynamic v) => JsonValueTransformer.parse<String>(v);
+  OutputAaBean({this.bb});
+  factory OutputAaBean.fromJson(dynamic json) {
+    if (json is Map) return _$OutputAaBeanFromJson(json);
+    if (json is List) return _$OutputAaBeanFromJson({'data': json});
+    throw 'fromJson parameter must be List or Map, but you give ${json?.runtimeType}';
+  }
 
-String _parserFuncUsername(dynamic v) => JsonValueTransformer.parse<String>(v);
+  bool get isJsonList => _rootIsList;
 
-String _parserFuncPass(dynamic v) => JsonValueTransformer.parse<String>(v);
+  dynamic toJson() {
+    Map<String, dynamic> json = _$OutputAaBeanToJson(this);
+    return _rootIsList ? json['data'] : json;
+  }
+}
 
-String _parserFuncAward(dynamic v) => JsonValueTransformer.parse<String>(v);
+@JsonSerializable()
+class OutputAaBb$1ListBean {
+  bool _rootIsList = false;
+  @JsonKey(fromJson: _parserFuncAaBb$1ListName)
+  String name;
+  @JsonKey(fromJson: _parserFuncAaBb$1ListAge)
+  int age;
+  @JsonKey(fromJson: _parserFuncAaBb$1ListCcc)
+  int ccc;
 
-String _parserFuncAmoney(dynamic v) => JsonValueTransformer.parse<String>(v);
+  OutputAaBb$1ListBean({this.name, this.age, this.ccc});
+  factory OutputAaBb$1ListBean.fromJson(dynamic json) {
+    if (json is Map) return _$OutputAaBb$1ListBeanFromJson(json);
+    if (json is List) return _$OutputAaBb$1ListBeanFromJson({'data': json});
+    throw 'fromJson parameter must be List or Map, but you give ${json?.runtimeType}';
+  }
 
-String _parserFuncBmoney(dynamic v) => JsonValueTransformer.parse<String>(v);
+  bool get isJsonList => _rootIsList;
 
-String _parserFuncMoney(dynamic v) => JsonValueTransformer.parse<String>(v);
+  dynamic toJson() {
+    Map<String, dynamic> json = _$OutputAaBb$1ListBeanToJson(this);
+    return _rootIsList ? json['data'] : json;
+  }
+}
 
-String _parserFuncGift(dynamic v) => JsonValueTransformer.parse<String>(v);
+@JsonSerializable()
+class OutputAaBb$0ListBean {
+  bool _rootIsList = false;
+  @JsonKey(fromJson: _parserFuncAaBb$0ListName)
+  String name;
+  @JsonKey(fromJson: _parserFuncAaBb$0ListAge)
+  int age;
 
-String _parserFuncRebate(dynamic v) => JsonValueTransformer.parse<String>(v);
+  OutputAaBb$0ListBean({this.name, this.age});
+  factory OutputAaBb$0ListBean.fromJson(dynamic json) {
+    if (json is Map) return _$OutputAaBb$0ListBeanFromJson(json);
+    if (json is List) return _$OutputAaBb$0ListBeanFromJson({'data': json});
+    throw 'fromJson parameter must be List or Map, but you give ${json?.runtimeType}';
+  }
 
-String _parserFuncBcmoney(dynamic v) => JsonValueTransformer.parse<String>(v);
+  bool get isJsonList => _rootIsList;
 
-String _parserFuncBlmoney(dynamic v) => JsonValueTransformer.parse<String>(v);
+  dynamic toJson() {
+    Map<String, dynamic> json = _$OutputAaBb$0ListBeanToJson(this);
+    return _rootIsList ? json['data'] : json;
+  }
+}
 
-String _parserFuncType(dynamic v) => JsonValueTransformer.parse<String>(v);
+String _parserFuncAaBb$0ListName(dynamic v) =>
+    JsonValueTransformer.parse<String>(v);
 
-int _parserFuncIsb(dynamic v) => JsonValueTransformer.parse<int>(v);
+int _parserFuncAaBb$0ListAge(dynamic v) => JsonValueTransformer.parse<int>(v);
 
-int _parserFuncIsz(dynamic v) => JsonValueTransformer.parse<int>(v);
+String _parserFuncAaBb$1ListName(dynamic v) =>
+    JsonValueTransformer.parse<String>(v);
 
-int _parserFuncLv(dynamic v) => JsonValueTransformer.parse<int>(v);
+int _parserFuncAaBb$1ListAge(dynamic v) => JsonValueTransformer.parse<int>(v);
 
-int _parserFuncRkey(dynamic v) => JsonValueTransformer.parse<int>(v);
-
-String _parserFuncRealname(dynamic v) => JsonValueTransformer.parse<String>(v);
-
-int _parserFuncIcon(dynamic v) => JsonValueTransformer.parse<int>(v);
-
-int _parserFuncPhone(dynamic v) => JsonValueTransformer.parse<int>(v);
+int _parserFuncAaBb$1ListCcc(dynamic v) => JsonValueTransformer.parse<int>(v);

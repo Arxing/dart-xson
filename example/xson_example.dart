@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:xson/xson.dart' as xson;
 
-import 'generated/output.dart';
+//import 'generated/output.dart';
 
 main() async {
   File from = File('./example/sample.json');
@@ -12,7 +12,7 @@ main() async {
   String jsonSource = from.readAsStringSync();
   jsonSource = xson.readJsonIgnoreComments(jsonSource);
   dynamic json = xson.jsonDecode(jsonSource);
-  OutputBean outputBean = OutputBean.fromJson(json);
-  String encode = xson.jsonEncode(outputBean.toJson());
-  print(encode);
+//  OutputBean outputBean = OutputBean.fromJson(json);
+//  String encode = xson.jsonEncode(outputBean.toJson());
+//  print(encode);
 }

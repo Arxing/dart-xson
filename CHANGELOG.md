@@ -48,3 +48,7 @@ ex:
 //@.b[].c=String
 ```
 
+## 0.0.7+5
+
+- fixed bugs of nested List parsed
+

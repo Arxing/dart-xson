@@ -167,7 +167,7 @@ class _Xson {
       if (element == null) elementTypes.add(TypeToken.ofDynamic());
       if (isPrimitive(element?.runtimeType)) {
         elementTypes.add(TypeToken.parse(element));
-      } else {
+      } else if(element is Map) {
         JsonInfo jsonInfo = JsonInfo.parse(element);
         String md5 = jsonInfo.md5;
         if (cache.containsKey(md5)) continue;
@@ -182,6 +182,9 @@ class _Xson {
           typeToken = result;
         }
         elementTypes.add(typeToken);
+      } else if(element is List){
+        TypeToken componentType = _generateListTypeTokenRecursively(ownKey, element, fileSpec, fileName, depth, selector);
+        elementTypes.add(TypeToken.ofListByToken(componentType));
       }
     }
     if (elementTypes.toSet().toList().length == 1) {
