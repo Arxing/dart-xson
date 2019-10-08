@@ -52,3 +52,6 @@ ex:
 
 - fixed bugs of nested List parsed
 
+## 0.0.8
+
+- fixed transformer of List

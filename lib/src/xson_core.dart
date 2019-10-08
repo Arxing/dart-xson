@@ -167,7 +167,7 @@ class _Xson {
       if (element == null) elementTypes.add(TypeToken.ofDynamic());
       if (isPrimitive(element?.runtimeType)) {
         elementTypes.add(TypeToken.parse(element));
-      } else if(element is Map) {
+      } else if (element is Map) {
         JsonInfo jsonInfo = JsonInfo.parse(element);
         String md5 = jsonInfo.md5;
         if (cache.containsKey(md5)) continue;
@@ -182,7 +182,7 @@ class _Xson {
           typeToken = result;
         }
         elementTypes.add(typeToken);
-      } else if(element is List){
+      } else if (element is List) {
         TypeToken componentType = _generateListTypeTokenRecursively(ownKey, element, fileSpec, fileName, depth, selector);
         elementTypes.add(TypeToken.ofListByToken(componentType));
       }
@@ -245,6 +245,8 @@ class _Xson {
       String key, dynamic val, String ownKey, FileSpec fileSpec, String rootClassName, int depth, String selector) {
     PropertySpec propertySpec;
     TypeToken typeToken;
+    TypeToken componentTypeToken;
+    bool isList = false;
     if (val == null) propertySpec = PropertySpec.ofDynamic(key);
     if (val is int) {
       typeToken = TypeToken.ofInt();
@@ -267,23 +269,33 @@ class _Xson {
       // build this object property spec with element class spec
       propertySpec = PropertySpec.of(key, type: TypeToken.ofName(innerClassSpec.className));
     } else if (val is List) {
+      isList = true;
       // return component type token while visit a list in other map
       String newKey = _combineToNewKey(ownKey, key);
       // get the element type token
-      TypeToken componentType = _iterateJsonEntity(val, newKey, fileSpec, rootClassName, depth + 1, selector);
+      componentTypeToken = _iterateJsonEntity(val, newKey, fileSpec, rootClassName, depth + 1, selector);
       // build this list property spec with element type token
-      propertySpec = PropertySpec.ofListByToken(key, componentType: componentType);
+      propertySpec = PropertySpec.ofListByToken(key, componentType: componentTypeToken);
     }
     typeToken = _extras.containsKey(selector) ? TypeToken.ofName(_extras[selector]) : typeToken;
-    if (typeToken != null) {
+    if (typeToken != null || isList) {
       String propertyUniqueId = renameTo__AnApple(ownKey) + renameTo__AnApple(propertySpec.name);
       String factoryName = "_parserFunc$propertyUniqueId";
-      fileSpec.methods.add(MethodSpec.build(
-        factoryName,
-        parameters: [ParameterSpec.normal("v")],
-        returnType: typeToken,
-        codeBlock: CodeBlockSpec.line('JsonValueTransformer.parse<${typeToken.typeName}>(v);'),
-      ));
+      if (isList) {
+        fileSpec.methods.add(MethodSpec.build(
+          factoryName,
+          parameters: [ParameterSpec.normal("v", type: TypeToken.ofList<dynamic>())],
+          returnType: TypeToken.ofListByToken(componentTypeToken),
+          codeBlock: CodeBlockSpec.line("v.map((o) => JsonValueTransformer.parse<${componentTypeToken.typeName}>(o)).toList();"),
+        ));
+      } else {
+        fileSpec.methods.add(MethodSpec.build(
+          factoryName,
+          parameters: [ParameterSpec.normal("v")],
+          returnType: typeToken,
+          codeBlock: CodeBlockSpec.line("JsonValueTransformer.parse<${typeToken.typeName}>(v);"),
+        ));
+      }
       _findJsonKeyOrCreate(propertySpec).parameters.add(ParameterSpec.named(
             "fromJson",
             isValue: true,
