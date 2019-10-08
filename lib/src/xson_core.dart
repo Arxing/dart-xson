@@ -295,6 +295,7 @@ class _Xson {
           returnType: typeToken,
           codeBlock: CodeBlockSpec.line("JsonValueTransformer.parse<${typeToken.typeName}>(v);"),
         ));
+        propertySpec.type = typeToken;
       }
       _findJsonKeyOrCreate(propertySpec).parameters.add(ParameterSpec.named(
             "fromJson",
@@ -302,7 +303,6 @@ class _Xson {
             value: factoryName,
             valueString: false,
           ));
-      propertySpec.type = typeToken;
     }
     return propertySpec;
   }

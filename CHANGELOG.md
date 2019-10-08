@@ -55,3 +55,7 @@ ex:
 ## 0.0.8
 
 - fixed transformer of List
+
+## 0.0.8+1
+
+- bug fixed
