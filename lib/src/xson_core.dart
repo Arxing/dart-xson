@@ -205,14 +205,40 @@ class _Xson {
     fileSpec.dependencies.add(DependencySpec.import("package:xson_utils/xson_utils.dart"));
     fileSpec.dependencies.add(DependencySpec.part('${renameToOtherMode(fileName, NamedMode.an_apple)}.g.dart'));
     fileSpec.methods.add(MethodSpec.build(
-      "_innerValueParser",
-      parameters: [ParameterSpec.normal("v", type: TypeToken.ofDynamic())],
+      "_innerValueParser<R>",
+      parameters: [
+        ParameterSpec.normal("v", type: TypeToken.ofDynamic()),
+        ParameterSpec.named("typeR", type: TypeToken.of(Type)),
+        ParameterSpec.named("depth", type: TypeToken.ofInt(), defaultValue: 0),
+      ],
       returnType: TypeToken.ofDynamic(),
-      codeBlock: CodeBlockSpec.empty()
-        ..addLine("if(v == null) return null;")
-        ..addLine("Type type = v.runtimeType;")
-        ..addLine("if (isPrimitive(type)) return JsonValueTransformer.parse(v);")
-        ..addLine("if (isList(type)) return (v as List).map((element) => _innerValueParser(element)).toList();"),
+      codeBlock: CodeBlockSpec.empty()..addLine(r"""
+  print("=============================================== depth=$depth");
+  Type type = typeR ?? R;
+  print("R=$R typeR=$typeR   最後type=$type");
+  print("json = $v");
+  if (v == null) return null;
+  if (isPrimitive(type)) return JsonValueTransformer.parse<R>(v);
+  if (isList(type)) {
+    print("bbb $type");
+    var list = (v as List).map((o) {
+      print("cccccc runtimeType=${o.runtimeType}");
+      return _innerValueParser(o, typeR: o.runtimeType, depth: depth + 1);
+    }).toList();
+    switch (type.toString()) {
+      case "List<String>":
+        return list.cast<String>().toList();
+      case "List<int>":
+        return list.cast<int>().toList();
+      case "List<double>":
+        return list.cast<double>().toList();
+      case "List<bool>":
+        return list.cast<bool>().toList();
+      default:
+        return list;
+    }
+  }
+      """),
     ));
     return fileSpec;
   }
@@ -296,13 +322,15 @@ class _Xson {
       if (isList) {
         CodeBlockSpec codeBlock;
         if (componentTypeToken.isPrimitive) {
-          codeBlock = CodeBlockSpec.line("v.map((o) => JsonValueTransformer.parse<${componentTypeToken.typeName}>(o)).toList();");
+          codeBlock = CodeBlockSpec.line(
+              "v.map<${componentTypeToken.typeName}>((o) => JsonValueTransformer.parse<${componentTypeToken.typeName}>(o)).toList();");
         } else {
-          codeBlock = CodeBlockSpec.line("v.map((o) => _innerValueParser(o)).toList();");
+          codeBlock = CodeBlockSpec.line(
+              "(v as List).map<${componentTypeToken.typeName}>((o) => _innerValueParser<${componentTypeToken.typeName}>(o)).toList();");
         }
         fileSpec.methods.add(MethodSpec.build(
           factoryName,
-          parameters: [ParameterSpec.normal("v", type: TypeToken.ofList<dynamic>())],
+          parameters: [ParameterSpec.normal("v", type: TypeToken.ofDynamic())],
           returnType: TypeToken.ofListByToken(componentTypeToken),
           codeBlock: codeBlock,
         ));
@@ -333,8 +361,8 @@ class _Xson {
   }
 
   void _extendValueParserMethod(FileSpec fileSpec, ClassSpec classSpec) {
-    MethodSpec parser = fileSpec.methods.firstWhere((o) => o.methodName == "_innerValueParser");
-    parser.codeBlock.addLine("if(type == ${classSpec.className}) return ${classSpec.className}.fromJson(v);");
+    MethodSpec parser = fileSpec.methods.firstWhere((o) => o.methodName == "_innerValueParser<R>");
+    parser.codeBlock.addLine("if(type == ${classSpec.className}) return ${classSpec.className}.fromJson(v) as R;");
   }
 }
 

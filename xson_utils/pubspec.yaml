@@ -1,6 +1,6 @@
 name: xson_utils
 description: A starting point for Dart libraries or applications.
-version: 0.0.2+2
+version: 0.0.2+3
 homepage: https://github.com/Arxing/dart-xson
 author: Arxing <meiswind711108@gmail.com>
 pubpage: https://pub.dev/packages/xson
