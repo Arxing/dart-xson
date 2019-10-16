@@ -282,11 +282,17 @@ class _Xson {
       String propertyUniqueId = renameTo__AnApple(ownKey) + renameTo__AnApple(propertySpec.name);
       String factoryName = "_parserFunc$propertyUniqueId";
       if (isList) {
+        CodeBlockSpec codeBlock;
+        if (componentTypeToken.isPrimitive) {
+          codeBlock = CodeBlockSpec.line("v.map((o) => JsonValueTransformer.parse<${componentTypeToken.typeName}>(o)).toList();");
+        } else {
+          codeBlock = CodeBlockSpec.line("v.map((o) => ${componentTypeToken.typeName}.fromJson(o)).toList();");
+        }
         fileSpec.methods.add(MethodSpec.build(
           factoryName,
           parameters: [ParameterSpec.normal("v", type: TypeToken.ofList<dynamic>())],
           returnType: TypeToken.ofListByToken(componentTypeToken),
-          codeBlock: CodeBlockSpec.line("v.map((o) => JsonValueTransformer.parse<${componentTypeToken.typeName}>(o)).toList();"),
+          codeBlock: codeBlock,
         ));
       } else {
         fileSpec.methods.add(MethodSpec.build(

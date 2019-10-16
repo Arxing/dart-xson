@@ -1,8 +1,9 @@
 class JsonValueTransformer {
   static R parse<R>(dynamic v) {
+    if (v == null) return null;
     Type actualType = v.runtimeType;
     Type expectType = R;
-    dynamic result;
+    dynamic result = v;
     switch (expectType) {
       case String:
         result = v.toString();
