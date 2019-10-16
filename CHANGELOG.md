@@ -59,3 +59,11 @@ ex:
 ## 0.0.8+1
 
 - bug fixed
+
+## 0.0.8+2
+
+- bug fixed
+
+## 0.0.8+3
+
+- bug fixed

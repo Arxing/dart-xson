@@ -127,6 +127,8 @@ class _Xson {
 
       // build class spec
       ClassSpec classSpec = _buildClassSpec(className, rootIsObject: true, keys: map.keys);
+      // construct factory method
+      _extendValueParserMethod(fileSpec, classSpec);
       // foreach elements in map entity
       for (var entry in map.entries) {
         String key = entry.key;
@@ -202,6 +204,16 @@ class _Xson {
     fileSpec.dependencies.add(DependencySpec.import('package:json_annotation/json_annotation.dart'));
     fileSpec.dependencies.add(DependencySpec.import("package:xson_utils/xson_utils.dart"));
     fileSpec.dependencies.add(DependencySpec.part('${renameToOtherMode(fileName, NamedMode.an_apple)}.g.dart'));
+    fileSpec.methods.add(MethodSpec.build(
+      "_innerValueParser",
+      parameters: [ParameterSpec.normal("v", type: TypeToken.ofDynamic())],
+      returnType: TypeToken.ofDynamic(),
+      codeBlock: CodeBlockSpec.empty()
+        ..addLine("if(v == null) return null;")
+        ..addLine("Type type = v.runtimeType;")
+        ..addLine("if (isPrimitive(type)) return JsonValueTransformer.parse(v);")
+        ..addLine("if (isList(type)) return (v as List).map((element) => _innerValueParser(element)).toList();"),
+    ));
     return fileSpec;
   }
 
@@ -286,7 +298,7 @@ class _Xson {
         if (componentTypeToken.isPrimitive) {
           codeBlock = CodeBlockSpec.line("v.map((o) => JsonValueTransformer.parse<${componentTypeToken.typeName}>(o)).toList();");
         } else {
-          codeBlock = CodeBlockSpec.line("v.map((o) => ${componentTypeToken.typeName}.fromJson(o)).toList();");
+          codeBlock = CodeBlockSpec.line("v.map((o) => _innerValueParser(o)).toList();");
         }
         fileSpec.methods.add(MethodSpec.build(
           factoryName,
@@ -318,6 +330,11 @@ class _Xson {
       spec.metas.add(MetaSpec.ofConstructor(TypeToken.ofName("JsonKey")));
     }
     return spec.metas.firstWhere((o) => o.typeToken == TypeToken.ofName("JsonKey"));
+  }
+
+  void _extendValueParserMethod(FileSpec fileSpec, ClassSpec classSpec) {
+    MethodSpec parser = fileSpec.methods.firstWhere((o) => o.methodName == "_innerValueParser");
+    parser.codeBlock.addLine("if(type == ${classSpec.className}) return ${classSpec.className}.fromJson(v);");
   }
 }
 

@@ -54,3 +54,15 @@ class JsonValueTransformer {
     return result as R;
   }
 }
+
+List<Type> _primitiveTypes = [int, double, bool, String];
+
+bool isPrimitive(Type type) => _primitiveTypes.any((o) => o == type);
+
+bool isNotPrimitive(Type type) => !isPrimitive(type);
+
+bool isList(Type type) => type == List;
+
+bool isMap(Type type) => type == Map;
+
+bool isDynamic(Type type) => type == dynamic;

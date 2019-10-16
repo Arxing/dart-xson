@@ -7,7 +7,7 @@ import 'package:xson/xson.dart' as xson;
 main() async {
   File from = File('./example/sample.json');
   File output = File('./example/generated/output.dart');
-  await xson.generateJsonBeanFile(from.readAsStringSync(), output, runBuildRunner: false);
+  await xson.generateJsonBeanFile(from.readAsStringSync(), output, runBuildRunner: true);
 //
   String jsonSource = from.readAsStringSync();
   jsonSource = xson.readJsonIgnoreComments(jsonSource);
