@@ -213,18 +213,11 @@ class _Xson {
       ],
       returnType: TypeToken.ofDynamic(),
       codeBlock: CodeBlockSpec.empty()..addLine(r"""
-  print("=============================================== depth=$depth");
   Type type = typeR ?? R;
-  print("R=$R typeR=$typeR   最後type=$type");
-  print("json = $v");
   if (v == null) return null;
   if (isPrimitive(type)) return JsonValueTransformer.parse<R>(v);
   if (isList(type)) {
-    print("bbb $type");
-    var list = (v as List).map((o) {
-      print("cccccc runtimeType=${o.runtimeType}");
-      return _innerValueParser(o, typeR: o.runtimeType, depth: depth + 1);
-    }).toList();
+    var list = (v as List).map((o) => _innerValueParser(o, typeR: o.runtimeType)).toList();
     switch (type.toString()) {
       case "List<String>":
         return list.cast<String>().toList();
