@@ -13,3 +13,5 @@ doc/api/
 
 **.iml
 .idea/
+example/sample.json
+example/input.json
