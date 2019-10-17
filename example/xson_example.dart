@@ -9,6 +9,7 @@ main() async {
   File output = File('./example/generated/output.dart');
   File inputJson = File('./example/input.json');
 //  await xson.generateJsonBeanFile(make.readAsStringSync(), output, runBuildRunner: true);
+//  await Future.delayed(Duration(seconds: 5));
 //
   String jsonSource = inputJson.readAsStringSync();
   jsonSource = xson.readJsonIgnoreComments(jsonSource);

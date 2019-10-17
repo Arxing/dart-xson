@@ -217,7 +217,7 @@ class _Xson {
   if (v == null) return null;
   if (isPrimitive(type)) return JsonValueTransformer.parse<R>(v);
   if (isList(type)) {
-    var list = (v as List).map((o) => _innerValueParser(o, typeR: o.runtimeType)).toList();
+    var list = (v as List).map((o) => _innerValueParser(o, typeR: o.runtimeType, depth: depth + 1)).toList();
     switch (type.toString()) {
       case "List<String>":
         return list.cast<String>().toList();
@@ -314,13 +314,14 @@ class _Xson {
       String factoryName = "_parserFunc$propertyUniqueId";
       if (isList) {
         CodeBlockSpec codeBlock;
+        String elementParserLine;
         if (componentTypeToken.isPrimitive) {
-          codeBlock = CodeBlockSpec.line(
-              "v.map<${componentTypeToken.typeName}>((o) => JsonValueTransformer.parse<${componentTypeToken.typeName}>(o)).toList();");
+          elementParserLine = "JsonValueTransformer.parse<${componentTypeToken.typeName}>(o)";
         } else {
-          codeBlock = CodeBlockSpec.line(
-              "(v as List).map<${componentTypeToken.typeName}>((o) => _innerValueParser<${componentTypeToken.typeName}>(o)).toList();");
+          elementParserLine = "_innerValueParser<${componentTypeToken.typeName}>(o)";
         }
+        codeBlock = CodeBlockSpec.line("(v as List)?.map<${componentTypeToken.typeName}>((o) => $elementParserLine)?.toList();");
+
         fileSpec.methods.add(MethodSpec.build(
           factoryName,
           parameters: [ParameterSpec.normal("v", type: TypeToken.ofDynamic())],
