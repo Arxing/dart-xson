@@ -1,3 +1,4 @@
+@deprecated
 class JsonValueTransformer {
   static R parse<R>(dynamic v) {
     if (v == null) return null;
@@ -57,10 +58,14 @@ class JsonValueTransformer {
 
 List<Type> _primitiveTypes = [int, double, bool, String];
 
+@deprecated
 bool isPrimitive(Type type) => type == null ? false : _primitiveTypes.any((o) => o == type);
 
+@deprecated
 bool isNotPrimitive(Type type) => type == null ? false : !isPrimitive(type);
 
+@deprecated
 bool isList(Type type) => type == null ? false : type.toString().startsWith("List<");
 
+@deprecated
 bool isMap(Type type) => type == null ? false : type.toString().startsWith("Map<");
