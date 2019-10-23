@@ -215,18 +215,18 @@ class _Xson {
       codeBlock: CodeBlockSpec.empty()..addLine(r"""
   Type type = typeR ?? R;
   if (v == null) return null;
-  if (isPrimitive(type)) return JsonValueTransformer.parse<R>(v);
+  if (isPrimitive(type)) return translateT<R>(v);
   if (isList(type)) {
     var list = (v as List).map((o) => _innerValueParser(o, typeR: o.runtimeType, depth: depth + 1)).toList();
     switch (type.toString()) {
       case "List<String>":
-        return list.cast<String>().toList();
+        return list.map((o) => translateT<String>(o)).toList();
       case "List<int>":
-        return list.cast<int>().toList();
+        return list.map((o) => translateT<int>(o)).toList();
       case "List<double>":
-        return list.cast<double>().toList();
+        return list.map((o) => translateT<double>(o)).toList();
       case "List<bool>":
-        return list.cast<bool>().toList();
+        return list.map((o) => translateT<bool>(o)).toList();
       default:
         return list;
     }
