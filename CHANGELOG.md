@@ -67,3 +67,7 @@ ex:
 ## 0.0.8+3
 
 - bug fixed
+
+## 1.0.0
+
+- Now xson is a pure library for resolving json, bean generating will move to xson_builder

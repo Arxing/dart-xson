@@ -1,10 +1,3 @@
-Now xson is a pure library for resolving json, bean generating will move to xson_builder.
-
-## Usage
-
-A simple usage example:
-
-```dart
 import 'package:xson/xson.dart';
 
 var jsonString1 = """
@@ -48,6 +41,3 @@ void main() {
   };
   element1.traversalChildrenNode(callback);
 }
-
-```
-
