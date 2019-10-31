@@ -71,3 +71,29 @@ ex:
 ## 1.0.0
 
 - Now xson is a pure library for resolving json, bean generating will move to xson_builder
+
+## 1.0.1
+
+#### JsonElement
+
+- new getter `isInt`, `isDouble`, `isBool` and `isString` 
+
+- new getter `type`, can get JsonType of JsonElement 
+
+#### JsonArray
+
+- remove getter `asNum`, `asString`, `asDouble`, `asInt` and `asBool` 
+
+#### JsonObject
+
+- new function `addProperty`, can add any type value
+
+#### JsonPrimitive
+
+- new named constructor `ofInt` and `ofDouble`
+
+#### JsonInfo
+
+- fixed `==` operator function
+
+- new `toString()`, it will return md5

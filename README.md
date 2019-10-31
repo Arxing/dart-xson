@@ -1,6 +1,31 @@
-Now xson is a pure library for resolving json, bean generating will move to xson_builder.
+![](https://img.shields.io/badge/language-dart-orange.svg)
+![](https://img.shields.io/badge/latest-1.0.1-green.svg) 
+ 
+Xson is a pure library for resolving json, bean generating will move to xson_builder.
 
 ## Usage
+Xson used like Gson.
+
+#### Json member
+
+| class         | mirror type                     |
+| ------------- | ------------------------------- |
+| JsonElement   | any                             |
+| JsonNull      | null                            |
+| JsonPrimitive | int, double, bool and String    |
+| JsonObject    | Map                             |
+| JsonArray     | List                            | 
+
+#### other
+
+| class            | description                   |
+| ---------------- | ----------------------------- |
+| JsonSerializer   | json serialize                |
+| JsonDeserializer | json deserialize              |
+| JsonFormatter    | format json string            |
+| JsonInfo         | resolve json structure to md5 |
+| JsonType         | enum of json type             | 
+
 
 A simple usage example:
 
@@ -48,6 +73,5 @@ void main() {
   };
   element1.traversalChildrenNode(callback);
 }
-
 ```
 

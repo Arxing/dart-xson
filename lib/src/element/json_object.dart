@@ -12,20 +12,46 @@ class JsonObject extends JsonElement {
     return result;
   }
 
-  void add(String property, JsonElement val) => _members[property] = (val == null) ? JsonNull.INSTANCE : val;
+  void add(String key, JsonElement val) => _members[key] = (val == null) ? JsonNull.INSTANCE : val;
 
-  void operator []=(String memberName, JsonElement element) => _members[memberName] = element;
+  void operator []=(String key, JsonElement element) => _members[key] = element;
 
-  JsonElement operator [](String memberName) => _members[memberName];
+  JsonElement operator [](String key) => _members[key];
 
-  JsonElement remove(String property) => _members.remove(property);
+  JsonElement remove(String key) => _members.remove(key);
 
-  void addPropertyString(String property, String val) =>
-      add(property, val == null ? JsonNull.INSTANCE : JsonPrimitive.ofString(val));
+  void addProperty(String key, dynamic val) {
+    JsonElement element;
+    if (val == null)
+      element = JsonNull.INSTANCE;
+    else if (val is JsonElement)
+      element = val.deepCopy();
+    else if (val is int)
+      element = JsonPrimitive.ofInt(val);
+    else if (val is double)
+      element = JsonPrimitive.ofDouble(val);
+    else if (val is bool)
+      element = JsonPrimitive.ofBool(val);
+    else if (val is String)
+      element = JsonPrimitive.ofString(val);
+    else if (val is List || val is Map)
+      element = JsonElement.fromJson(val);
+    else {
+      var json = xson.encode(val);
+      element = xson.decodeToJsonElement(json);
+    }
+    add(key, element);
+  }
 
-  void addPropertyBool(String property, bool val) => add(property, val == null ? JsonNull.INSTANCE : JsonPrimitive.ofBool(val));
+  void addPropertyString(String key, String val) => addProperty(key, val);
 
-  void addPropertyNum(String property, num val) => add(property, val == null ? JsonNull.INSTANCE : JsonPrimitive.ofNum(val));
+  void addPropertyBool(String key, bool val) => addProperty(key, val);
+
+  void addPropertyNum(String key, num val) => addProperty(key, val);
+
+  void addPropertyInt(String key, int val) => addProperty(key, val);
+
+  void addPropertyDouble(String key, double val) => addProperty(key, val);
 
   Iterable<MapEntry<String, JsonElement>> get entries => _members.entries;
 
@@ -33,15 +59,15 @@ class JsonObject extends JsonElement {
 
   int get length => _members.length;
 
-  bool has(String memberName) => _members.containsKey(memberName);
+  bool has(String key) => _members.containsKey(key);
 
-  JsonElement get(String memberName) => _members[memberName];
+  JsonElement get(String key) => _members[key];
 
-  JsonPrimitive getAsJsonPrimitive(String memberName) => _members[memberName].asPrimitive;
+  JsonPrimitive getAsJsonPrimitive(String key) => _members[key].asPrimitive;
 
-  JsonArray getAsJsonArray(String memberName) => _members[memberName].asArray;
+  JsonArray getAsJsonArray(String key) => _members[key].asArray;
 
-  JsonObject getAsJsonObject(String memberName) => _members[memberName].asObject;
+  JsonObject getAsJsonObject(String key) => _members[key].asObject;
 
   @override
   bool operator ==(Object other) =>

@@ -132,31 +132,6 @@ class JsonArray extends JsonElement implements Iterable<JsonElement> {
 
   void operator []=(int index, JsonElement element) => _elements[index] = element;
 
-  num get asNum {
-    if (length == 1) return _elements.first.asNum;
-    throw JsonIllegalStateException();
-  }
-
-  String get asString {
-    if (length == 1) return _elements.first.asString;
-    throw JsonIllegalStateException();
-  }
-
-  double get asDouble {
-    if (length == 1) return _elements.first.asDouble;
-    throw JsonIllegalStateException();
-  }
-
-  int get asInt {
-    if (length == 1) return _elements.first.asInt;
-    throw JsonIllegalStateException();
-  }
-
-  bool get asBool {
-    if (length == 1) return _elements.first.asBool;
-    throw JsonIllegalStateException();
-  }
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) || other is JsonArray && runtimeType == other.runtimeType && _elements == other._elements;

@@ -12,6 +12,10 @@ class JsonPrimitive extends JsonElement {
 
   JsonPrimitive.ofNum(num val) : this.of(val);
 
+  JsonPrimitive.ofInt(int val) : this.of(val);
+
+  JsonPrimitive.ofDouble(double val) : this.of(val);
+
   JsonPrimitive.ofString(String val) : this.of(val);
 
   bool get isBool => _value is bool;

@@ -52,11 +52,13 @@ class JsonInfo {
   JsonInfo.ofEmptyList() : this.of('List');
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is JsonInfo && runtimeType == other.runtimeType && json == other.json;
+  bool operator ==(Object other) => identical(this, other) || other is JsonInfo && this.md5 == other.md5;
 
   @override
   int get hashCode => json.hashCode;
+
+  @override
+  String toString() => json;
 
   Map get map {
     Map map = {'type': type};

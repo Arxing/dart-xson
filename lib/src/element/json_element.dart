@@ -16,6 +16,14 @@ abstract class JsonElement {
 
   bool get isNull => this is JsonNull;
 
+  bool get isInt => isPrimitive && asPrimitive.isInt;
+
+  bool get isDouble => isPrimitive && asPrimitive.isDouble;
+
+  bool get isBool => isPrimitive && asPrimitive.isBool;
+
+  bool get isString => isPrimitive && asPrimitive.isString;
+
   JsonObject get asObject {
     if (isObject) return this as JsonObject;
     throw JsonIllegalStateException('Not a JSON Object: ${this.toString()}');
@@ -60,6 +68,8 @@ abstract class JsonElement {
     if (isPrimitive && asPrimitive.isString) return asPrimitive.asString;
     throw JsonIllegalStateException('Not a String: ${this.toString()}');
   }
+
+  JsonType get type => JsonType.fromElement(this);
 
   @override
   String toString() => toJsonString();
