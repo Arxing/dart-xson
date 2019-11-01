@@ -1,16 +1,14 @@
 import 'package:xson/xson.dart';
 
 class JsonNull extends JsonElement {
-  static final JsonNull INSTANCE = JsonNull._();
-
-  JsonNull._();
+  JsonNull.newInstance();
 
   @override
-  JsonElement deepCopy() => INSTANCE;
+  JsonElement deepCopy() => this;
 
   @override
   int get hashCode => runtimeType.hashCode;
 
   @override
-  bool operator ==(other) => this == other || other is JsonNull;
+  bool operator ==(other) => other is JsonNull;
 }

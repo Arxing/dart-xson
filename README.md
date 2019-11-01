@@ -1,5 +1,5 @@
 ![](https://img.shields.io/badge/language-dart-orange.svg)
-![](https://img.shields.io/badge/latest-1.0.1-green.svg) 
+![](https://img.shields.io/badge/latest-1.0.2+1-green.svg) 
  
 Xson is a pure library for resolving json, bean generating will move to xson_builder.
 

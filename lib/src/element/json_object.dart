@@ -12,31 +12,39 @@ class JsonObject extends JsonElement {
     return result;
   }
 
-  void add(String key, JsonElement val) => _members[key] = (val == null) ? JsonNull.INSTANCE : val;
+  void add(String key, JsonElement val) => this[key] = val;
 
-  void operator []=(String key, JsonElement element) => _members[key] = element;
+  void operator []=(String key, JsonElement element) {
+    element = element ?? JsonNull.newInstance();
+    element.changeParent(this);
+    _members[key] = element;
+  }
 
   JsonElement operator [](String key) => _members[key];
 
-  JsonElement remove(String key) => _members.remove(key);
+  JsonElement remove(String key) {
+    JsonElement element = _members.remove(key);
+    element?.removeParent();
+    return element;
+  }
 
   void addProperty(String key, dynamic val) {
     JsonElement element;
-    if (val == null)
-      element = JsonNull.INSTANCE;
-    else if (val is JsonElement)
+    if (val == null) {
+      element = JsonNull.newInstance();
+    } else if (val is JsonElement) {
       element = val.deepCopy();
-    else if (val is int)
+    } else if (val is int) {
       element = JsonPrimitive.ofInt(val);
-    else if (val is double)
+    } else if (val is double) {
       element = JsonPrimitive.ofDouble(val);
-    else if (val is bool)
+    } else if (val is bool) {
       element = JsonPrimitive.ofBool(val);
-    else if (val is String)
+    } else if (val is String) {
       element = JsonPrimitive.ofString(val);
-    else if (val is List || val is Map)
+    } else if (val is List || val is Map) {
       element = JsonElement.fromJson(val);
-    else {
+    } else {
       var json = xson.encode(val);
       element = xson.decodeToJsonElement(json);
     }

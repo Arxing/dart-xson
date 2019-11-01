@@ -3,7 +3,6 @@ import 'package:xson/xson.dart';
 typedef void JsonDeserializeCallback(dynamic node, JsonElement parent, int depth);
 
 class JsonDeserializer {
-
   JsonElement fromJson(dynamic json, {JsonDeserializeCallback callback}) => _internalParse(json, null, 0, callback);
 
   JsonElement _internalParse(dynamic node, JsonElement parent, int depth, JsonDeserializeCallback callback) {
@@ -12,7 +11,7 @@ class JsonDeserializer {
     JsonElement result;
     switch (jsonToken) {
       case JsonType.NULL:
-        result = JsonNull.INSTANCE;
+        result = JsonNull.newInstance();
         break;
       case JsonType.INT:
       case JsonType.DOUBLE:

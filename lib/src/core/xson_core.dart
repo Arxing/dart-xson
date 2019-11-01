@@ -13,6 +13,8 @@ class Xson {
   JsonElement decodeToJsonElement(String json) => JsonElement.fromJsonString(json);
 
   dynamic decode(String json) => JsonElement.fromJsonString(json).toJson();
+
+  JsonElement jsonToJsonElement(dynamic json) => decodeToJsonElement(encode(json));
 }
 
 Xson xson = Xson();

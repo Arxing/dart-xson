@@ -3,10 +3,27 @@ import 'package:xson/xson.dart';
 abstract class JsonElement {
   static JsonSerializer _serializer = JsonSerializer();
   static JsonDeserializer _deserializer = JsonDeserializer();
+  JsonElement _parent;
 
   JsonElement();
 
   JsonElement deepCopy();
+
+  void changeParent(JsonElement parent) => _parent = parent;
+
+  void removeParent() => _parent = null;
+
+  JsonElement get parent => _parent;
+
+  JsonElement get ancestor {
+    JsonElement target = this;
+    while (target.parent != null) {
+      target = target.parent;
+    }
+    return target;
+  }
+
+  bool get isAncestor => (parent == null);
 
   bool get isArray => this is JsonArray;
 

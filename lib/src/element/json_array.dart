@@ -5,7 +5,7 @@ import 'package:xson/xson.dart';
 class JsonArray extends JsonElement implements Iterable<JsonElement> {
   final List<JsonElement> _elements;
 
-  JsonArray.empty() : _elements = [];
+  JsonArray.empty([JsonElement parent]) : _elements = [];
 
   JsonArray.capacity(int capacity) : _elements = List(capacity);
 
@@ -112,25 +112,43 @@ class JsonArray extends JsonElement implements Iterable<JsonElement> {
 
   List<JsonElement> get values => _elements;
 
-  void add(JsonElement element) => _elements.add(element ?? JsonNull.INSTANCE);
+  void add(JsonElement element) {
+    element = element ?? JsonNull.newInstance();
+    element.changeParent(this);
+    _elements.add(element);
+  }
 
-  void addBool(bool val) => _elements.add(val == null ? JsonNull.INSTANCE : JsonPrimitive.ofBool(val));
+  void addBool(bool val) => add(val == null ? JsonNull.newInstance() : JsonPrimitive.ofBool(val));
 
-  void addString(String val) => _elements.add(val == null ? JsonNull.INSTANCE : JsonPrimitive.ofString(val));
+  void addString(String val) => add(val == null ? JsonNull.newInstance() : JsonPrimitive.ofString(val));
 
-  void addNum(num val) => _elements.add(val == null ? JsonNull.INSTANCE : JsonPrimitive.ofNum(val));
+  void addNum(num val) => add(val == null ? JsonNull.newInstance() : JsonPrimitive.ofNum(val));
 
-  void addAll(JsonArray array) => _elements.addAll(array._elements);
+  void addInt(int val) => add(val == null ? JsonNull.newInstance() : JsonPrimitive.ofInt(val));
+
+  void addDouble(double val) => add(val == null ? JsonNull.newInstance() : JsonPrimitive.ofDouble(val));
+
+  void addAll(JsonArray array) => array.forEach((element) => add(element));
 
   void set(int index, JsonElement element) => _elements[index] = element;
 
-  void remove(JsonElement element) => _elements.remove(element);
+  bool remove(JsonElement element) {
+    if (element != null) {
+      element.removeParent();
+      return _elements.remove(element);
+    }
+    throw "JsonArray can not remove null";
+  }
 
-  void removeAt(int index) => _elements.removeAt(index);
+  bool removeAt(int index) => remove(_elements[index]);
 
   JsonElement operator [](int index) => _elements[index];
 
-  void operator []=(int index, JsonElement element) => _elements[index] = element;
+  void operator []=(int index, JsonElement element) {
+    element = element ?? JsonNull.newInstance();
+    element.changeParent(this);
+    _elements[index] = element;
+  }
 
   @override
   bool operator ==(Object other) =>

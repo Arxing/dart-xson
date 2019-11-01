@@ -97,3 +97,9 @@ ex:
 - fixed `==` operator function
 
 - new `toString()`, it will return md5
+
+
+
+## 1.0.2
+
+- new `parent`, `ancestor` and `isAncestor` in `JsonElement`, you can use these to traversal any node on a json tree simply.
