@@ -14,6 +14,27 @@ class JsonType {
 
   String get name => _name;
 
+  Type get nativeType {
+    switch (this) {
+      case NULL:
+        return Null;
+      case DOUBLE:
+        return double;
+      case INT:
+        return int;
+      case BOOL:
+        return bool;
+      case STRING:
+        return String;
+      case OBJECT:
+        return Map;
+      case ARRAY:
+        return List;
+      default:
+        throw JsonIllegalStateException();
+    }
+  }
+
   static List<JsonType> get values => [NULL, DOUBLE, INT, BOOL, STRING, OBJECT, ARRAY];
 
   static List<String> get names => [NULL.name, DOUBLE.name, INT.name, BOOL.name, STRING.name, OBJECT.name, ARRAY.name];

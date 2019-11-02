@@ -103,3 +103,8 @@ ex:
 ## 1.0.2
 
 - new `parent`, `ancestor` and `isAncestor` in `JsonElement`, you can use these to traversal any node on a json tree simply.
+
+
+## 1.0.3
+
+- new `nativeType` in `JsonType`

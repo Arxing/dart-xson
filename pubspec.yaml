@@ -1,7 +1,7 @@
 name: xson
 description: Xson is a pure library for resolving json (like Gson), you can easily use Xson to
   encode/decode/generate/traversal/prettify/simpify by less code.
-version: 1.0.2+1
+version: 1.0.3
 homepage: https://github.com/Arxing/dart-xson
 author: Arxing <meiswind711108@gmail.com>
 pubpage: https://pub.dev/packages/xson
