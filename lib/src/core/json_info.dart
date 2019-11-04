@@ -33,6 +33,25 @@ class JsonInfo {
     return JsonInfo.ofDynamic();
   }
 
+  factory JsonInfo.parseElement(JsonElement jsonElement) {
+    if (jsonElement.isNull) return JsonInfo.ofDynamic();
+    if (jsonElement.isInt) return JsonInfo.ofInt();
+    if (jsonElement.isDouble) return JsonInfo.ofDouble();
+    if (jsonElement.isBool) return JsonInfo.ofBool();
+    if (jsonElement.isString) return JsonInfo.ofString();
+    if (jsonElement.isObject) {
+      JsonInfo root = JsonInfo.ofEmptyMap();
+      jsonElement.asObject.entries.forEach((entry) => root.objects[entry.key] = JsonInfo.parse(entry.value));
+      return root;
+    }
+    if (jsonElement.isArray) {
+      JsonInfo root = JsonInfo.ofEmptyList();
+      jsonElement.asArray.forEach((entry) => root.arrays.add(JsonInfo.parse(entry)));
+      return root;
+    }
+    return JsonInfo.ofDynamic();
+  }
+
   JsonInfo.ofDynamic() : this.of('dynamic');
 
   JsonInfo.ofInt() : this.of('int');

@@ -108,3 +108,7 @@ ex:
 ## 1.0.3
 
 - new `nativeType` in `JsonType`
+
+## 1.0.4
+
+- `JsonInfo` support `JsonElement` parsed
